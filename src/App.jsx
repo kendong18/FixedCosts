@@ -7,6 +7,7 @@ function App() {
   const [expenses, setExpenses] = useLocalStorage('fixed_costs_expenses', []);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState(null);
+  const [filterCategory, setFilterCategory] = useState('전체');
   
   // Form State
   const [formData, setFormData] = useState({
@@ -26,6 +27,14 @@ function App() {
   const sortedExpenses = useMemo(() => {
     return [...expenses].sort((a, b) => Number(a.date) - Number(b.date));
   }, [expenses]);
+
+  const filteredAndSortedExpenses = useMemo(() => {
+    let filtered = expenses;
+    if (filterCategory !== '전체') {
+      filtered = expenses.filter(exp => exp.category === filterCategory);
+    }
+    return [...filtered].sort((a, b) => Number(a.date) - Number(b.date));
+  }, [expenses, filterCategory]);
 
   const handleOpenModal = (expense = null) => {
     if (expense) {
@@ -103,8 +112,18 @@ function App() {
 
       <div className="delay-2">
         <h2 className="section-title">
-          <span>이번 달 지출 내역</span>
-          <CalendarIcon size={20} className="text-muted" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span>이번 달 지출 내역</span>
+            <CalendarIcon size={20} className="text-muted" />
+          </div>
+          <select 
+            value={filterCategory} 
+            onChange={(e) => setFilterCategory(e.target.value)}
+            style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 'var(--radius-sm)' }}
+          >
+            <option value="전체">전체 보기</option>
+            {categories.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
         </h2>
 
         {expenses.length === 0 ? (
@@ -114,7 +133,7 @@ function App() {
           </div>
         ) : (
           <div className="expense-list">
-            {sortedExpenses.map(expense => {
+            {filteredAndSortedExpenses.map(expense => {
               const isDueSoon = Number(expense.date) >= currentDay && Number(expense.date) <= currentDay + 3;
 
               return (
