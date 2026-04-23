@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Plus, Wallet, Calendar as CalendarIcon, MoreVertical, Trash2 } from 'lucide-react';
+import { Plus, Wallet, Calendar as CalendarIcon, MoreVertical, Trash2, Settings } from 'lucide-react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import './App.css';
 
@@ -8,6 +8,7 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState(null);
   const [filterCategory, setFilterCategory] = useState('전체');
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   // Form State
   const [formData, setFormData] = useState({
@@ -75,16 +76,54 @@ function App() {
     }
   };
 
+  const handleExportData = () => {
+    const dataStr = JSON.stringify(expenses, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    const exportFileDefaultName = 'fixed_costs_backup.json';
+    
+    let linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  };
 
+  const handleImportData = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const fileReader = new FileReader();
+    fileReader.readAsText(file, "UTF-8");
+    fileReader.onload = e => {
+      try {
+        const importedData = JSON.parse(e.target.result);
+        if (Array.isArray(importedData)) {
+          if (window.confirm('기존 데이터가 덮어씌워집니다. 계속하시겠습니까?')) {
+            setExpenses(importedData);
+            setIsSettingsOpen(false);
+            alert('데이터를 성공적으로 불러왔습니다!');
+          }
+        } else {
+          alert('잘못된 형태의 백업 파일입니다.');
+        }
+      } catch (error) {
+        alert('파일을 읽는 중 오류가 발생했습니다.');
+      }
+    };
+  };
 
   const currentMonth = new Date().getMonth();
   const currentDay = new Date().getDate();
 
   return (
     <div className="app-container animate-fade-in">
-      <header>
-        <h1 className="text-gradient">나의 고정 지출</h1>
-        <p className="text-muted" style={{ fontSize: '0.875rem', marginTop: '0.25rem' }}>매월 나가는 고정 비용을 한눈에 관리하세요</p>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 className="text-gradient">나의 고정 지출</h1>
+          <p className="text-muted" style={{ fontSize: '0.875rem', marginTop: '0.25rem' }}>매월 나가는 고정 비용을 한눈에 관리하세요</p>
+        </div>
+        <button className="btn-icon" style={{ background: 'transparent', border: 'none' }} onClick={() => setIsSettingsOpen(true)}>
+          <Settings size={24} color="var(--text-secondary)" />
+        </button>
       </header>
 
       <div className="dashboard-card glass-panel delay-1">
@@ -234,6 +273,52 @@ function App() {
             <div className="form-actions" style={{ marginTop: '1rem' }}>
               <button className="btn btn-secondary" onClick={() => setExpenseToDelete(null)}>취소</button>
               <button className="btn" style={{ background: 'var(--accent-danger)', color: 'white' }} onClick={confirmDelete}>삭제</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {isSettingsOpen && (
+        <div className="modal-overlay" onClick={(e) => { if(e.target.className === 'modal-overlay') setIsSettingsOpen(false) }}>
+          <div className="modal-content">
+            <h2 style={{ marginBottom: '1.5rem' }}>설정 및 백업</h2>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="glass-panel" style={{ padding: '1rem' }}>
+                <h3 style={{ marginBottom: '0.5rem', fontSize: '1rem' }}>데이터 내보내기</h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+                  현재 지출 내역을 파일로 저장하여 백업합니다.
+                </p>
+                <button className="btn btn-primary" style={{ width: '100%' }} onClick={handleExportData}>
+                  백업 파일 다운로드
+                </button>
+              </div>
+
+              <div className="glass-panel" style={{ padding: '1rem' }}>
+                <h3 style={{ marginBottom: '0.5rem', fontSize: '1rem' }}>데이터 불러오기</h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+                  저장해둔 백업 파일을 불러와 복원합니다. (기존 데이터 덮어쓰기)
+                </p>
+                <input 
+                  type="file" 
+                  accept=".json" 
+                  id="import-file" 
+                  style={{ display: 'none' }} 
+                  onChange={handleImportData} 
+                />
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ width: '100%' }} 
+                  onClick={() => document.getElementById('import-file').click()}
+                >
+                  백업 파일 선택
+                </button>
+              </div>
+            </div>
+
+            <div className="form-actions" style={{ marginTop: '2rem' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setIsSettingsOpen(false)}>닫기</button>
             </div>
           </div>
         </div>
