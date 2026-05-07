@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Plus, Wallet, Calendar as CalendarIcon, MoreVertical, Trash2, Settings, Sun, Moon } from 'lucide-react';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import './App.css';
 
@@ -10,6 +11,32 @@ const CATEGORY_COLORS = {
   '보험': '#f59e0b', // Amber
   '통신비': '#ec4899', // Pink
   '기타': '#64748b'  // Slate
+};
+
+const CustomTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div style={{
+        background: 'var(--bg-secondary)',
+        border: '1px solid var(--border-color)',
+        padding: '0.5rem 0.75rem',
+        borderRadius: 'var(--radius-md)',
+        boxShadow: 'var(--shadow-lg)',
+        color: 'var(--text-primary)',
+        fontSize: '0.875rem',
+        zIndex: 100
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: payload[0].payload.fill || CATEGORY_COLORS[payload[0].name] }} />
+          <span style={{ fontWeight: 600 }}>{payload[0].name}</span>
+        </div>
+        <div style={{ marginTop: '0.25rem', paddingLeft: '1rem', color: 'var(--text-secondary)' }}>
+          ₩{payload[0].value.toLocaleString()}
+        </div>
+      </div>
+    );
+  }
+  return null;
 };
 
 function App() {
@@ -70,7 +97,8 @@ function App() {
     });
     return Object.entries(totals)
       .filter(([, amount]) => amount > 0)
-      .sort((a, b) => b[1] - a[1]);
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, value]) => ({ name, value }));
   }, [expenses]);
 
   const handleOpenModal = (expense = null) => {
@@ -195,32 +223,33 @@ function App() {
           </div>
 
           {totalAmount > 0 && (
-            <div style={{ width: '100px', height: '100px', position: 'relative', flexShrink: 0 }}>
-              <svg viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)', width: '100%', height: '100%', overflow: 'visible' }}>
-                <circle cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="12" />
-                {(() => {
-                  let cumulativePercent = 0;
-                  return chartData.map(([category, amount]) => {
-                    const percent = amount / totalAmount;
-                    const dashArray = `${Math.max(percent * 251.2 - 2, 0)} 251.2`;
-                    const dashOffset = -(cumulativePercent * 251.2);
-                    cumulativePercent += percent;
-                    return (
-                      <circle 
-                        key={category}
-                        cx="50" cy="50" r="40" 
-                        fill="transparent" 
-                        stroke={CATEGORY_COLORS[category] || '#ccc'} 
-                        strokeWidth="12" 
-                        strokeDasharray={dashArray} 
-                        strokeDashoffset={dashOffset}
-                        strokeLinecap="round"
-                        style={{ transition: 'stroke-dasharray 0.5s ease, stroke-dashoffset 0.5s ease' }}
+            <div style={{ width: '110px', height: '110px', position: 'relative', flexShrink: 0 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
+                  <Pie
+                    data={chartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={36}
+                    outerRadius={50}
+                    paddingAngle={4}
+                    dataKey="value"
+                    stroke="none"
+                    isAnimationActive={true}
+                    animationDuration={800}
+                    animationEasing="ease-out"
+                  >
+                    {chartData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={CATEGORY_COLORS[entry.name] || '#ccc'} 
+                        style={{ outline: 'none' }}
                       />
-                    );
-                  });
-                })()}
-              </svg>
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
             </div>
           )}
         </div>
