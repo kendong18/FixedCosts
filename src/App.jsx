@@ -17,6 +17,7 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expenseToDelete, setExpenseToDelete] = useState(null);
   const [filterCategory, setFilterCategory] = useState('전체');
+  const [sortOption, setSortOption] = useState('결제일 빠른 순');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   // Form State
@@ -43,8 +44,15 @@ function App() {
     if (filterCategory !== '전체') {
       filtered = expenses.filter(exp => exp.category === filterCategory);
     }
-    return [...filtered].sort((a, b) => Number(a.date) - Number(b.date));
-  }, [expenses, filterCategory]);
+    return [...filtered].sort((a, b) => {
+      if (sortOption === '결제일 빠른 순') return Number(a.date) - Number(b.date);
+      if (sortOption === '결제일 늦은 순') return Number(b.date) - Number(a.date);
+      if (sortOption === '금액 높은 순') return Number(b.amount) - Number(a.amount);
+      if (sortOption === '금액 낮은 순') return Number(a.amount) - Number(b.amount);
+      if (sortOption === '이름순') return a.name.localeCompare(b.name);
+      return 0;
+    });
+  }, [expenses, filterCategory, sortOption]);
 
   const chartData = useMemo(() => {
     const totals = {};
@@ -212,14 +220,27 @@ function App() {
             <span>이번 달 지출 내역</span>
             <CalendarIcon size={20} className="text-muted" />
           </div>
-          <select 
-            value={filterCategory} 
-            onChange={(e) => setFilterCategory(e.target.value)}
-            style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 'var(--radius-sm)' }}
-          >
-            <option value="전체">전체 보기</option>
-            {categories.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <select 
+              value={sortOption} 
+              onChange={(e) => setSortOption(e.target.value)}
+              style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 'var(--radius-sm)' }}
+            >
+              <option value="결제일 빠른 순">결제일 빠른 순</option>
+              <option value="결제일 늦은 순">결제일 늦은 순</option>
+              <option value="금액 높은 순">금액 높은 순</option>
+              <option value="금액 낮은 순">금액 낮은 순</option>
+              <option value="이름순">이름순</option>
+            </select>
+            <select 
+              value={filterCategory} 
+              onChange={(e) => setFilterCategory(e.target.value)}
+              style={{ width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.875rem', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 'var(--radius-sm)' }}
+            >
+              <option value="전체">전체 보기</option>
+              {categories.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
         </h2>
 
         {expenses.length === 0 ? (
