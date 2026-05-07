@@ -115,7 +115,8 @@ function App() {
   const currentDay = new Date().getDate();
 
   return (
-    <div className="app-container animate-fade-in">
+    <>
+      <div className="app-container animate-fade-in">
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <h1 className="text-gradient">나의 고정 지출</h1>
@@ -201,11 +202,10 @@ function App() {
           </div>
         )}
       </div>
+    </div>
 
-
-
-      {/* Modal Overlay */}
-      {isModalOpen && (
+    {/* Modal Overlay */}
+    {isModalOpen && (
         <div className="modal-overlay" onClick={(e) => { if(e.target.className === 'modal-overlay') setIsModalOpen(false) }}>
           <div className="modal-content">
             <h2 style={{ marginBottom: '1.5rem' }}>고정 지출 {formData.id ? '수정' : '추가'}</h2>
@@ -326,7 +326,7 @@ function App() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
