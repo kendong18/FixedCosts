@@ -116,14 +116,19 @@ function App() {
 
   return (
     <div className="app-container animate-fade-in">
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <h1 className="text-gradient">나의 고정 지출</h1>
           <p className="text-muted" style={{ fontSize: '0.875rem', marginTop: '0.25rem' }}>매월 나가는 고정 비용을 한눈에 관리하세요</p>
         </div>
-        <button className="btn-icon" style={{ background: 'transparent', border: 'none' }} onClick={() => setIsSettingsOpen(true)}>
-          <Settings size={24} color="var(--text-secondary)" />
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <button className="btn-icon" style={{ background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', color: 'white', border: 'none', boxShadow: 'var(--shadow-md)' }} onClick={() => handleOpenModal()}>
+            <Plus size={20} />
+          </button>
+          <button className="btn-icon" style={{ background: 'transparent', border: 'none' }} onClick={() => setIsSettingsOpen(true)}>
+            <Settings size={24} color="var(--text-secondary)" />
+          </button>
+        </div>
       </header>
 
       <div className="dashboard-card glass-panel delay-1">
@@ -197,9 +202,7 @@ function App() {
         )}
       </div>
 
-      <button className="fab" onClick={() => handleOpenModal()}>
-        <Plus size={28} />
-      </button>
+
 
       {/* Modal Overlay */}
       {isModalOpen && (
