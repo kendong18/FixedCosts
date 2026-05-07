@@ -61,14 +61,23 @@ function App() {
     id: null,
     name: '',
     amount: '',
-    date: '1', // Day of the month
-    category: '구독'
+    date: '1',
+    category: '구독',
+    cycle: '월간',
+    currency: 'KRW'
   });
+
+  const getMonthlyEquivalentKRW = (expense) => {
+    let amt = Number(expense.amount);
+    if (expense.currency === 'USD') amt *= 1400; // Fixed exchange rate
+    if (expense.cycle === '연간') amt /= 12;
+    return Math.round(amt);
+  };
 
   const categories = ['구독', '주거비', '공과금', '보험', '통신비', '기타'];
 
   const totalAmount = useMemo(() => {
-    return expenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
+    return expenses.reduce((sum, exp) => sum + getMonthlyEquivalentKRW(exp), 0);
   }, [expenses]);
 
   const sortedExpenses = useMemo(() => {
@@ -83,8 +92,8 @@ function App() {
     return [...filtered].sort((a, b) => {
       if (sortOption === '결제일 빠른 순') return Number(a.date) - Number(b.date);
       if (sortOption === '결제일 늦은 순') return Number(b.date) - Number(a.date);
-      if (sortOption === '금액 높은 순') return Number(b.amount) - Number(a.amount);
-      if (sortOption === '금액 낮은 순') return Number(a.amount) - Number(b.amount);
+      if (sortOption === '금액 높은 순') return getMonthlyEquivalentKRW(b) - getMonthlyEquivalentKRW(a);
+      if (sortOption === '금액 낮은 순') return getMonthlyEquivalentKRW(a) - getMonthlyEquivalentKRW(b);
       if (sortOption === '이름순') return a.name.localeCompare(b.name);
       return 0;
     });
@@ -93,7 +102,7 @@ function App() {
   const chartData = useMemo(() => {
     const totals = {};
     expenses.forEach(exp => {
-      totals[exp.category] = (totals[exp.category] || 0) + Number(exp.amount);
+      totals[exp.category] = (totals[exp.category] || 0) + getMonthlyEquivalentKRW(exp);
     });
     return Object.entries(totals)
       .filter(([, amount]) => amount > 0)
@@ -110,7 +119,9 @@ function App() {
         name: '',
         amount: '',
         date: '1',
-        category: '구독'
+        category: '구독',
+        cycle: '월간',
+        currency: 'KRW'
       });
     }
     setIsModalOpen(true);
@@ -308,9 +319,19 @@ function App() {
                     </div>
                   </div>
                   
-                  <div className="expense-amount-area">
-                    <div className="expense-amount">₩{Number(expense.amount).toLocaleString()}</div>
-                    <button onClick={(e) => handleDeleteClick(e, expense.id)} className="btn-icon" style={{ width: 28, height: 28, padding: 4 }}>
+                  <div className="expense-amount-area" style={{ alignItems: 'flex-end' }}>
+                    <div className="expense-amount">
+                      {expense.currency === 'USD' ? '$' : '₩'}{Number(expense.amount).toLocaleString()}
+                      <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 'normal', marginLeft: '2px' }}>
+                        /{expense.cycle === '연간' ? '년' : '월'}
+                      </span>
+                    </div>
+                    { (expense.currency === 'USD' || expense.cycle === '연간') && (
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        월 환산 약 ₩{getMonthlyEquivalentKRW(expense).toLocaleString()}
+                      </div>
+                    )}
+                    <button onClick={(e) => handleDeleteClick(e, expense.id)} className="btn-icon" style={{ width: 28, height: 28, padding: 4, marginTop: '4px' }}>
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -341,14 +362,33 @@ function App() {
               </div>
 
               <div className="form-group">
-                <label>결제 금액 (원)</label>
-                <input 
-                  type="number" 
-                  value={formData.amount}
-                  onChange={e => setFormData({...formData, amount: e.target.value})}
-                  required
-                  placeholder="예: 10000"
-                />
+                <label>결제 금액 및 주기</label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <select 
+                    value={formData.currency || 'KRW'} 
+                    onChange={e => setFormData({...formData, currency: e.target.value})}
+                    style={{ width: '80px', flexShrink: 0 }}
+                  >
+                    <option value="KRW">₩(원)</option>
+                    <option value="USD">$(달러)</option>
+                  </select>
+                  <input 
+                    type="number" 
+                    style={{ flex: 1 }}
+                    value={formData.amount}
+                    onChange={e => setFormData({...formData, amount: e.target.value})}
+                    required
+                    placeholder={formData.currency === 'USD' ? "예: 10.99" : "예: 10000"}
+                  />
+                  <select 
+                    value={formData.cycle || '월간'} 
+                    onChange={e => setFormData({...formData, cycle: e.target.value})}
+                    style={{ width: '80px', flexShrink: 0 }}
+                  >
+                    <option value="월간">/ 월</option>
+                    <option value="연간">/ 년</option>
+                  </select>
+                </div>
               </div>
 
               <div className="form-group" style={{ display: 'flex', gap: '1rem' }}>
