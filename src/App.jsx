@@ -47,6 +47,7 @@ function App() {
   const [sortOption, setSortOption] = useState('결제일 빠른 순');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useLocalStorage('fixed_costs_theme_dark', true);
+  const [exchangeRate, setExchangeRate] = useLocalStorage('fixed_costs_usd_krw', 1400);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -55,6 +56,18 @@ function App() {
       document.body.classList.add('light-mode');
     }
   }, [isDarkMode]);
+
+  useEffect(() => {
+    // 실시간 환율 가져오기 (회원가입 필요 없는 완전 무료 API)
+    fetch('https://api.frankfurter.app/latest?from=USD&to=KRW')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.rates?.KRW) {
+          setExchangeRate(data.rates.KRW);
+        }
+      })
+      .catch(err => console.error('환율 정보 불러오기 실패:', err));
+  }, [setExchangeRate]);
   
   // Form State
   const [formData, setFormData] = useState({
@@ -69,7 +82,7 @@ function App() {
 
   const getMonthlyEquivalentKRW = (expense) => {
     let amt = Number(expense.amount);
-    if (expense.currency === 'USD') amt *= 1400; // Fixed exchange rate
+    if (expense.currency === 'USD') amt *= exchangeRate; 
     if (expense.cycle === '연간') amt /= 12;
     return Math.round(amt);
   };
@@ -78,7 +91,7 @@ function App() {
 
   const totalAmount = useMemo(() => {
     return expenses.reduce((sum, exp) => sum + getMonthlyEquivalentKRW(exp), 0);
-  }, [expenses]);
+  }, [expenses, exchangeRate]);
 
   const sortedExpenses = useMemo(() => {
     return [...expenses].sort((a, b) => Number(a.date) - Number(b.date));
@@ -97,7 +110,7 @@ function App() {
       if (sortOption === '이름순') return a.name.localeCompare(b.name);
       return 0;
     });
-  }, [expenses, filterCategory, sortOption]);
+  }, [expenses, filterCategory, sortOption, exchangeRate]);
 
   const chartData = useMemo(() => {
     const totals = {};
@@ -108,7 +121,7 @@ function App() {
       .filter(([, amount]) => amount > 0)
       .sort((a, b) => b[1] - a[1])
       .map(([name, value]) => ({ name, value }));
-  }, [expenses]);
+  }, [expenses, exchangeRate]);
 
   const handleOpenModal = (expense = null) => {
     if (expense) {
