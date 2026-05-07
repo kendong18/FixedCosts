@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Plus, Wallet, Calendar as CalendarIcon, MoreVertical, Trash2, Settings } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Plus, Wallet, Calendar as CalendarIcon, MoreVertical, Trash2, Settings, Sun, Moon } from 'lucide-react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import './App.css';
 
@@ -19,6 +19,15 @@ function App() {
   const [filterCategory, setFilterCategory] = useState('전체');
   const [sortOption, setSortOption] = useState('결제일 빠른 순');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useLocalStorage('fixed_costs_theme_dark', true);
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.body.classList.remove('light-mode');
+    } else {
+      document.body.classList.add('light-mode');
+    }
+  }, [isDarkMode]);
   
   // Form State
   const [formData, setFormData] = useState({
@@ -152,6 +161,9 @@ function App() {
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <button className="btn-icon" style={{ background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))', color: 'white', border: 'none', boxShadow: 'var(--shadow-md)' }} onClick={() => handleOpenModal()}>
             <Plus size={20} />
+          </button>
+          <button className="btn-icon" style={{ background: 'transparent', border: 'none' }} onClick={() => setIsDarkMode(!isDarkMode)}>
+            {isDarkMode ? <Sun size={24} color="var(--text-secondary)" /> : <Moon size={24} color="var(--text-secondary)" />}
           </button>
           <button className="btn-icon" style={{ background: 'transparent', border: 'none' }} onClick={() => setIsSettingsOpen(true)}>
             <Settings size={24} color="var(--text-secondary)" />

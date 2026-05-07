@@ -26,6 +26,12 @@
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --shadow-glow: 0 0 15px rgba(59, 130, 246, 0.3);
 
+  --body-bg-gradient: radial-gradient(circle at top left, #1e1b4b, #0f172a 40%);
+  --dashboard-bg: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+  --input-bg: rgba(0,0,0,0.2);
+  --overlay-bg: rgba(0, 0, 0, 0.6);
+  --badge-bg: rgba(255,255,255,0.1);
+
   --radius-sm: 0.375rem;
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
@@ -33,6 +39,28 @@
 
   --transition-fast: 0.15s ease;
   --transition-normal: 0.3s ease;
+}
+
+.light-mode {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-glass: rgba(255, 255, 255, 0.8);
+  --bg-glass-light: rgba(0, 0, 0, 0.05);
+  
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  
+  --border-color: rgba(0, 0, 0, 0.1);
+  --border-color-light: rgba(0, 0, 0, 0.05);
+  
+  --shadow-glow: 0 0 15px rgba(59, 130, 246, 0.2);
+
+  --body-bg-gradient: radial-gradient(circle at top left, #e0e7ff, #f8fafc 40%);
+  --dashboard-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(241, 245, 249, 0.8));
+  --input-bg: rgba(255, 255, 255, 0.8);
+  --overlay-bg: rgba(0, 0, 0, 0.3);
+  --badge-bg: rgba(0, 0, 0, 0.05);
 }
 
 * {
@@ -48,9 +76,9 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
-  /* Premium dark gradient background */
-  background: radial-gradient(circle at top left, #1e1b4b, #0f172a 40%);
+  background: var(--body-bg-gradient);
   background-attachment: fixed;
+  transition: background var(--transition-normal), color var(--transition-normal);
 }
 
 #root {
@@ -102,7 +130,7 @@ input, select, button {
 }
 
 input, select {
-  background: rgba(0,0,0,0.2);
+  background: var(--input-bg);
   border: 1px solid var(--border-color);
   color: var(--text-primary);
   border-radius: var(--radius-md);
