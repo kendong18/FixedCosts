@@ -3,6 +3,15 @@ import { Plus, Wallet, Calendar as CalendarIcon, MoreVertical, Trash2, Settings 
 import { useLocalStorage } from './hooks/useLocalStorage';
 import './App.css';
 
+const CATEGORY_COLORS = {
+  '구독': '#3b82f6', // Blue
+  '주거비': '#8b5cf6', // Purple
+  '공과금': '#10b981', // Green
+  '보험': '#f59e0b', // Amber
+  '통신비': '#ec4899', // Pink
+  '기타': '#64748b'  // Slate
+};
+
 function App() {
   const [expenses, setExpenses] = useLocalStorage('fixed_costs_expenses', []);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,6 +45,16 @@ function App() {
     }
     return [...filtered].sort((a, b) => Number(a.date) - Number(b.date));
   }, [expenses, filterCategory]);
+
+  const chartData = useMemo(() => {
+    const totals = {};
+    expenses.forEach(exp => {
+      totals[exp.category] = (totals[exp.category] || 0) + Number(exp.amount);
+    });
+    return Object.entries(totals)
+      .filter(([, amount]) => amount > 0)
+      .sort((a, b) => b[1] - a[1]);
+  }, [expenses]);
 
   const handleOpenModal = (expense = null) => {
     if (expense) {
@@ -133,25 +152,57 @@ function App() {
       </header>
 
       <div className="dashboard-card glass-panel delay-1">
-        <div className="dashboard-content">
-          <p className="stat-label">이번 달 총 고정 지출</p>
-          <div className="total-amount">
-            <span className="currency">₩</span>
-            {totalAmount.toLocaleString()}
-          </div>
-          
-          <div className="stats-row">
-            <div className="stat-item">
-              <span className="stat-label">등록된 항목</span>
-              <span className="stat-value">{expenses.length}개</span>
+        <div className="dashboard-content" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <div style={{ flex: 1 }}>
+            <p className="stat-label">이번 달 총 고정 지출</p>
+            <div className="total-amount">
+              <span className="currency">₩</span>
+              {totalAmount.toLocaleString()}
             </div>
-            <div className="stat-item" style={{ alignItems: 'flex-end' }}>
-              <span className="stat-label">다음 결제 예정</span>
-              <span className="stat-value text-gradient">
-                {sortedExpenses.find(e => Number(e.date) >= currentDay)?.name || '없음'}
-              </span>
+            
+            <div className="stats-row" style={{ borderTop: 'none', marginTop: '0.5rem', paddingTop: '0' }}>
+              <div className="stat-item">
+                <span className="stat-label">항목</span>
+                <span className="stat-value">{expenses.length}개</span>
+              </div>
+              <div className="stat-item" style={{ alignItems: 'flex-end' }}>
+                <span className="stat-label">다음 결제</span>
+                <span className="stat-value text-gradient">
+                  {sortedExpenses.find(e => Number(e.date) >= currentDay)?.name || '없음'}
+                </span>
+              </div>
             </div>
           </div>
+
+          {totalAmount > 0 && (
+            <div style={{ width: '100px', height: '100px', position: 'relative', flexShrink: 0 }}>
+              <svg viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)', width: '100%', height: '100%', overflow: 'visible' }}>
+                <circle cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="12" />
+                {(() => {
+                  let cumulativePercent = 0;
+                  return chartData.map(([category, amount]) => {
+                    const percent = amount / totalAmount;
+                    const dashArray = `${Math.max(percent * 251.2 - 2, 0)} 251.2`;
+                    const dashOffset = -(cumulativePercent * 251.2);
+                    cumulativePercent += percent;
+                    return (
+                      <circle 
+                        key={category}
+                        cx="50" cy="50" r="40" 
+                        fill="transparent" 
+                        stroke={CATEGORY_COLORS[category] || '#ccc'} 
+                        strokeWidth="12" 
+                        strokeDasharray={dashArray} 
+                        strokeDashoffset={dashOffset}
+                        strokeLinecap="round"
+                        style={{ transition: 'stroke-dasharray 0.5s ease, stroke-dashoffset 0.5s ease' }}
+                      />
+                    );
+                  });
+                })()}
+              </svg>
+            </div>
+          )}
         </div>
       </div>
 
@@ -185,7 +236,12 @@ function App() {
                 <div key={expense.id} className={`expense-item ${isDueSoon ? 'due-soon' : ''}`}>
                   <div className="expense-info">
                     <div className="expense-details" onClick={() => handleOpenModal(expense)}>
-                      <h3>{expense.name} <span className="badge">{expense.category}</span></h3>
+                      <h3>
+                        {expense.name} 
+                        <span className="badge" style={{ marginLeft: '0.5rem', backgroundColor: CATEGORY_COLORS[expense.category] || 'rgba(255,255,255,0.1)', color: 'white', border: 'none' }}>
+                          {expense.category}
+                        </span>
+                      </h3>
                       <p>매월 {expense.date}일 결제</p>
                     </div>
                   </div>
